@@ -18,9 +18,10 @@ model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   name      String?
-  profile   UserProfile?
+  password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  profile   UserProfile?
   posts     Post[]
 }
 
