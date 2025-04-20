@@ -35,10 +35,15 @@ export class UsersController {
   // ไม่ต้องใส่ Guard เพราะเป็นการลงทะเบียน
   @Post('register')
   async registerUser(
-    @Body() userData: { name?: string; email: string; password: string },
+    @Body() userData: { 
+      name?: string; 
+      email: string; 
+      password: string;
+      username: string; // เพิ่ม username
+    },
   ): Promise<UserModel> {
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-    return this.usersService.createUser({
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      return this.usersService.createUser({
       ...userData,
       password: hashedPassword,
     });
