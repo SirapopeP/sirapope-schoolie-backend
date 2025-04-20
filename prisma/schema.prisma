@@ -13,17 +13,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Example models - you can modify these based on your needs
+enum Role {
+  ADMIN
+  ACADEMY_OWNER
+  TEACHER
+  STUDENT
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  username  String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  profile   UserProfile?
-  posts     Post[]
+  id                    Int      @id @default(autoincrement())
+  email                 String   @unique
+  username              String   @unique
+  name                  String?
+  password              String
+  passwordResetToken    String?
+  passwordResetExpires  DateTime?
+  roles               UserRole[]
+  academyOwner       Academy[]
+  academyMember      AcademyMember[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  profile             UserProfile?
+  posts               Post[]
 }
 
 model UserProfile {
@@ -32,10 +43,59 @@ model UserProfile {
   avatarUrl   String?
   phoneNumber String?
   address     String?
-  user        User     @relation(fields: [userId], references: [id])
-  userId      Int      @unique
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int      @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model UserRole {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, role])
+}
+
+model UserPermission {
+  permissionId  Int      @id @default(autoincrement())
+  userId        Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Academy {
+  id            Int       @id @default(autoincrement())
+  name          String
+  bio           String?
+  logoUrl       String?
+  workshopCount Int       @default(0)
+  studentCount  Int       @default(0)
+  teacherCount  Int       @default(0)
+  academyRank   Float     @default(0)
+  isActive      Boolean   @default(true)
+  owner         User      @relation(fields: [ownerId], references: [id])
+  ownerId       Int
+  members       AcademyMember[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([ownerId, name])
+}
+
+model AcademyMember {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  academy    Academy  @relation(fields: [academyId], references: [id])
+  academyId  Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, academyId])
 }
 
 model Post {
