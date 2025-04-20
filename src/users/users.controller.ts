@@ -68,4 +68,27 @@ export class UsersController {
   async deleteUser(@Param('id') id: string): Promise<UserModel> {
     return this.usersService.deleteUser({ id: Number(id) });
   }
+
+  @Post('password/initiate-change')
+  async initiatePasswordChange(
+    @Body() body: { emailOrUsername: string }
+  ) {
+    return this.usersService.initiatePasswordChange(body.emailOrUsername);
+  }
+
+  @Post('password/confirm-change')
+  async confirmPasswordChange(
+    @Body() body: {
+      userId: number;
+      token: string;
+      newPassword: string;
+    }
+  ) {
+    const user = await this.usersService.confirmPasswordChange(
+      body.userId,
+      body.token,
+      body.newPassword
+    );
+    return { message: 'Password updated successfully' };
+  }
 }
