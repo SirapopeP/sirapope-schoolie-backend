@@ -20,6 +20,14 @@ enum Role {
   STUDENT
 }
 
+enum Grade {
+  A
+  B
+  C
+  D
+  F
+}
+
 model User {
   id                    Int      @id @default(autoincrement())
   email                 String   @unique
@@ -28,21 +36,22 @@ model User {
   password              String
   passwordResetToken    String?
   passwordResetExpires  DateTime?
-  roles               UserRole[]
-  academyOwner       Academy[]
-  academyMember      AcademyMember[]
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  profile             UserProfile?
-  posts               Post[]
+  roles                 UserRole[]
+  academyOwner          Academy[]
+  academyMember         AcademyMember[]
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  profile               UserProfile?
+  posts                 Post[]
+  workshopParticipants  WorkshopParticipant[]
 }
 
 model UserProfile {
-  id          Int      @id @default(autoincrement())
-  bio         String?
-  avatarUrl   String?
-  phoneNumber String?
-  address     String?
+  id            Int      @id @default(autoincrement())
+  bio           String?
+  avatarUrl     String?
+  phoneNumber   String?
+  address       String?
   user          User     @relation(fields: [userId], references: [id])
   userId        Int      @unique
   createdAt     DateTime @default(now())
@@ -107,4 +116,60 @@ model Post {
   authorId  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model WorkshopCourses {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  maxSessions   Int
+  level         String   // Beginner, Intermediate, Advanced
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  workshops     Workshop[]
+}
+
+model Workshop {
+  id            String   @id @default(uuid())
+  course        WorkshopCourses @relation(fields: [courseId], references: [id])
+  courseId      String
+  enrolledAt    DateTime @default(now())
+  status        String   @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, CANCELLED
+  sessions      WorkshopSession[]
+  participants  WorkshopParticipant[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model WorkshopParticipant {
+  id            Int      @id @default(autoincrement())
+  workshop      Workshop @relation(fields: [workshopId], references: [id])
+  workshopId    String
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int
+  role          String   // STUDENT, TEACHER
+  teachingSessions WorkshopSession[] @relation("TeachingSessions")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([workshopId, userId])
+}
+
+model WorkshopSession {
+  id            String   @id @default(uuid())
+  workshop      Workshop @relation(fields: [workshopId], references: [id])
+  workshopId    String
+  sessionNumber Int
+  date          DateTime
+  grade         Grade?
+  teacher       WorkshopParticipant? @relation("TeachingSessions", fields: [teacherId], references: [id])
+  teacherId     Int?
+  submissionUrl String?
+  status        String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
