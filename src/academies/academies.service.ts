@@ -10,7 +10,7 @@ export class AcademiesService {
     private rolesService: RolesService,
   ) {}
 
-  async createAcademy(ownerId: number, data: {
+  async createAcademy(ownerId: string, data: {
     name: string;
     bio?: string;
     logoUrl?: string;
@@ -39,7 +39,7 @@ export class AcademiesService {
     });
   }
 
-  async getAcademies(userId: number) {
+  async getAcademies(userId: string) {
     const isAdmin = await this.rolesService.checkUserRole(userId, 'ADMIN');
     
     if (isAdmin) {
@@ -79,7 +79,7 @@ export class AcademiesService {
     });
   }
 
-  async updateAcademyStats(academyId: number) {
+  async updateAcademyStats(academyId: string) {
     const members = await this.prisma.academyMember.count({
       where: { academyId }
     });

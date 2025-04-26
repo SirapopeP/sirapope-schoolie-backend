@@ -10,12 +10,12 @@ export class RolesController {
   constructor(private rolesService: RolesService) {}
 
   @Post('assign')
-  async assignRole(@Body() body: { userId: number; role: Role }) {
+  async assignRole(@Body() body: { userId: string; role: Role }) {
     return this.rolesService.assignUserRole(body.userId, body.role);
   }
 
   @Get('user/:userId')
   async getUserRoles(@Param('userId') userId: string) {
-    return this.rolesService.getUserRoles(Number(userId));
+    return this.rolesService.getUserRoles(userId);
   }
 }

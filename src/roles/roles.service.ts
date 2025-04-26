@@ -6,7 +6,7 @@ import { Role } from '@prisma/client';
 export class RolesService {
   constructor(private prisma: PrismaService) {}
 
-  async assignUserRole(userId: number, role: Role) {
+  async assignUserRole(userId: string, role: Role) {
     // ตรวจสอบว่ามี user นี้อยู่จริง
     const user = await this.prisma.user.findUnique({
       where: { id: userId }
@@ -35,7 +35,7 @@ export class RolesService {
     });
   }
 
-  async getUserRoles(userId: number) {
+  async getUserRoles(userId: string) {
     return this.prisma.userRole.findMany({
       where: { userId },
       include: {
@@ -51,7 +51,7 @@ export class RolesService {
     });
   }
 
-  async checkUserRole(userId: number, role: Role): Promise<boolean> {
+  async checkUserRole(userId: string, role: Role): Promise<boolean> {
     const userRole = await this.prisma.userRole.findFirst({
       where: { userId, role }
     });

@@ -11,7 +11,7 @@ export class AcademiesController {
   @Post()
   async createAcademy(
     @Body() data: {
-      ownerId: number;
+      ownerId: string;
       name: string;
       bio?: string;
       logoUrl?: string;
@@ -26,6 +26,6 @@ export class AcademiesController {
 
   @Get('user/:userId')
   async getAcademies(@Param('userId') userId: string) {
-    return this.academiesService.getAcademies(Number(userId));
+    return this.academiesService.getAcademies(userId);
   }
 }

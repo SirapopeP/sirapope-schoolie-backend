@@ -10,7 +10,7 @@ export class UserProfilesController {
 
   @Get('user/:userId')
   async getUserProfile(@Param('userId') userId: string): Promise<UserProfileModel> {
-    const profile = await this.userProfilesService.userProfile({ userId: Number(userId) });
+    const profile = await this.userProfilesService.userProfile({ userId: userId });
     if (!profile) {
       throw new NotFoundException(`User profile for user ID ${userId} not found`);
     }
@@ -24,7 +24,7 @@ export class UserProfilesController {
       avatarUrl?: string;
       phoneNumber?: string;
       address?: string;
-      userId: number;
+      userId: string;
     },
   ): Promise<UserProfileModel> {
     // ตรวจสอบว่า profile ยังไม่มีอยู่
@@ -54,14 +54,14 @@ export class UserProfilesController {
   ): Promise<UserProfileModel> {
     // ตรวจสอบว่า profile มีอยู่จริง
     const profile = await this.userProfilesService.userProfile({ 
-      userId: Number(userId) 
+      userId: userId 
     });
     if (!profile) {
       throw new NotFoundException(`Profile not found for user ID ${userId}`);
     }
 
     return this.userProfilesService.updateUserProfile({
-      where: { userId: Number(userId) },  // เปลี่ยนจาก id เป็น userId
+      where: { userId: userId },  // เปลี่ยนจาก id เป็น userId
       data: profileData,
     });
   }

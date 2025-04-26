@@ -25,7 +25,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   async getUserById(@Param('id') id: string): Promise<UserModel> {
-    const user = await this.usersService.user({ id: Number(id) });
+    const user = await this.usersService.user({ id: id });
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
@@ -57,7 +57,7 @@ export class UsersController {
     @Body() userData: { name?: string; email?: string },
   ): Promise<UserModel> {
     return this.usersService.updateUser({
-      where: { id: Number(id) },
+      where: { id: id },
       data: userData,
     });
   }
@@ -66,7 +66,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async deleteUser(@Param('id') id: string): Promise<UserModel> {
-    return this.usersService.deleteUser({ id: Number(id) });
+    return this.usersService.deleteUser({ id: id });
   }
 
   @Post('password/initiate-change')
@@ -79,7 +79,7 @@ export class UsersController {
   @Post('password/confirm-change')
   async confirmPasswordChange(
     @Body() body: {
-      userId: number;
+      userId: string;
       token: string;
       newPassword: string;
     }

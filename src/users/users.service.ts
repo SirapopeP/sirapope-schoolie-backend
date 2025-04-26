@@ -58,7 +58,7 @@ export class UsersService {
 
   async initiatePasswordChange(emailOrUsername: string): Promise<{ 
     token: string;
-    userId: number;
+    userId: string;
   }> {
     // ค้นหาผู้ใช้
     const user = await this.findUserByEmailOrUsername(emailOrUsername);
@@ -85,7 +85,7 @@ export class UsersService {
   }
 
   async confirmPasswordChange(
-    userId: number, 
+    userId: string, 
     token: string, 
     newPassword: string
   ): Promise<User> {

@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  seed     = "ts-node prisma/seed.ts"
 }
 
 datasource db {
@@ -29,7 +30,7 @@ enum Grade {
 }
 
 model User {
-  id                    Int      @id @default(autoincrement())
+  id                    String   @id @default(uuid())
   email                 String   @unique
   username              String   @unique
   name                  String?
@@ -47,21 +48,21 @@ model User {
 }
 
 model UserProfile {
-  id            Int      @id @default(autoincrement())
+  id            String   @id @default(uuid())
   bio           String?
   avatarUrl     String?
   phoneNumber   String?
   address       String?
   user          User     @relation(fields: [userId], references: [id])
-  userId        Int      @unique
+  userId        String   @unique
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
 
 model UserRole {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   user      User     @relation(fields: [userId], references: [id])
-  userId    Int
+  userId    String
   role      Role
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -70,14 +71,14 @@ model UserRole {
 }
 
 model UserPermission {
-  permissionId  Int      @id @default(autoincrement())
-  userId        Int
+  permissionId  String   @id @default(uuid())
+  userId        String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
 
 model Academy {
-  id            Int       @id @default(autoincrement())
+  id            String    @id @default(uuid())
   name          String
   bio           String?
   logoUrl       String?
@@ -87,7 +88,7 @@ model Academy {
   academyRank   Float     @default(0)
   isActive      Boolean   @default(true)
   owner         User      @relation(fields: [ownerId], references: [id])
-  ownerId       Int
+  ownerId       String
   members       AcademyMember[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -96,11 +97,11 @@ model Academy {
 }
 
 model AcademyMember {
-  id         Int      @id @default(autoincrement())
+  id         String   @id @default(uuid())
   user       User     @relation(fields: [userId], references: [id])
-  userId     Int
+  userId     String
   academy    Academy  @relation(fields: [academyId], references: [id])
-  academyId  Int
+  academyId  String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -108,12 +109,12 @@ model AcademyMember {
 }
 
 model Post {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   title     String
   content   String?
   published Boolean  @default(false)
   author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
+  authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -145,15 +146,15 @@ model Workshop {
 }
 
 model WorkshopParticipant {
-  id            Int      @id @default(autoincrement())
-  workshop      Workshop @relation(fields: [workshopId], references: [id])
-  workshopId    String
-  user          User     @relation(fields: [userId], references: [id])
-  userId        Int
-  role          String   // STUDENT, TEACHER
+  id               String           @id @default(uuid())
+  workshop         Workshop         @relation(fields: [workshopId], references: [id])
+  workshopId       String
+  user             User             @relation(fields: [userId], references: [id])
+  userId           String
+  role             String           // STUDENT, TEACHER
   teachingSessions WorkshopSession[] @relation("TeachingSessions")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   @@unique([workshopId, userId])
 }
@@ -166,7 +167,7 @@ model WorkshopSession {
   date          DateTime
   grade         Grade?
   teacher       WorkshopParticipant? @relation("TeachingSessions", fields: [teacherId], references: [id])
-  teacherId     Int?
+  teacherId     String?
   submissionUrl String?
   status        String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
   notes         String?
