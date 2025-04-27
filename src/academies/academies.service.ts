@@ -103,4 +103,38 @@ export class AcademiesService {
       }
     });
   }
+
+  async updateAcademy(academyId: string, userId: string, data: {
+    name?: string;
+    bio?: string;
+    logoUrl?: string;
+  }): Promise<Academy> {
+    // ตรวจสอบว่า user เป็นเจ้าของ academy หรือ admin
+    const academy = await this.prisma.academy.findUnique({ where: { id: academyId } });
+    if (!academy) throw new ForbiddenException('Academy not found');
+
+    const isAdmin = await this.rolesService.checkUserRole(userId, 'ADMIN');
+    if (academy.ownerId !== userId && !isAdmin) {
+      throw new ForbiddenException('You are not allowed to update this academy');
+    }
+
+    return this.prisma.academy.update({
+      where: { id: academyId },
+      data,
+    });
+  }
+
+  async deleteAcademy(academyId: string, userId: string): Promise<{ message: string }> {
+    // ตรวจสอบว่า user เป็นเจ้าของ academy หรือ admin
+    const academy = await this.prisma.academy.findUnique({ where: { id: academyId } });
+    if (!academy) throw new ForbiddenException('Academy not found');
+
+    const isAdmin = await this.rolesService.checkUserRole(userId, 'ADMIN');
+    if (academy.ownerId !== userId && !isAdmin) {
+      throw new ForbiddenException('You are not allowed to delete this academy');
+    }
+
+    await this.prisma.academy.delete({ where: { id: academyId } });
+    return { message: 'Academy deleted successfully' };
+  }
 }

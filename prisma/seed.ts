@@ -41,11 +41,12 @@ async function main() {
       });
 
       // Add ADMIN role to the user
-      await prisma.userRole.create({
-        data: {
-          userId: user.id,
-          role: 'ADMIN',
-        },
+      await prisma.userRole.createMany({
+        data: [
+          { userId: user.id, role: 'ADMIN' },
+          { userId: user.id, role: 'ACADEMY_OWNER' }
+        ],
+        skipDuplicates: true
       });
       
       console.log(`Root admin created with fixed ID: ${user.id}`);
@@ -68,6 +69,23 @@ async function main() {
           },
         });
         console.log('Added ADMIN role to existing root admin');
+      }
+
+      // Ensure the user has ACADEMY_OWNER role
+      const hasOwnerRole = await prisma.userRole.findFirst({
+        where: {
+          userId: existingUser.id,
+          role: 'ACADEMY_OWNER',
+        },
+      });
+      if (!hasOwnerRole) {
+        await prisma.userRole.create({
+          data: {
+            userId: existingUser.id,
+            role: 'ACADEMY_OWNER',
+          },
+        });
+        console.log('Added ACADEMY_OWNER role to existing root admin');
       }
     }
     
