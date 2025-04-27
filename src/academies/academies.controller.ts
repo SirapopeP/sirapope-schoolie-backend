@@ -1,5 +1,5 @@
 // src/academies/academies.controller.ts
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Patch, Delete } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AcademiesService } from './academies.service';
 import { ForbiddenException } from '@nestjs/common';
@@ -37,5 +37,30 @@ export class AcademiesController {
   @Get('user/:userId')
   async getAcademies(@Param('userId') userId: string) {
     return this.academiesService.getAcademies(userId);
+  }
+
+  @Patch(':academyId')
+  async updateAcademy(
+    @Param('academyId') academyId: string,
+    @Body() data: {
+      userId: string;
+      name?: string;
+      bio?: string;
+      logoUrl?: string;
+    }
+  ) {
+    return this.academiesService.updateAcademy(academyId, data.userId, {
+      name: data.name,
+      bio: data.bio,
+      logoUrl: data.logoUrl
+    });
+  }
+
+  @Delete(':academyId')
+  async deleteAcademy(
+    @Param('academyId') academyId: string,
+    @Body() data: { userId: string }
+  ) {
+    return this.academiesService.deleteAcademy(academyId, data.userId);
   }
 }
