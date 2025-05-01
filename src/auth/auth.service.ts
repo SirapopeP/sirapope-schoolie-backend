@@ -16,8 +16,16 @@ export class AuthService {
       where: {
         OR: [
           { email: usernameOrEmail },
-          { username: usernameOrEmail } // ต้องเพิ่ม field username ใน schema ก่อน
+          { username: usernameOrEmail }
         ]
+      },
+      include: {
+        profile: true,
+        roles: {
+          select: {
+            role: true
+          }
+        }
       }
     });
 
@@ -32,7 +40,7 @@ export class AuthService {
     const payload = { 
       email: user.email, 
       sub: user.id,
-      username: user.username // เพิ่ม username ใน payload
+      username: user.username
     };
     
     return {
@@ -40,7 +48,17 @@ export class AuthService {
         id: user.id,
         email: user.email,
         username: user.username,
-        name: user.name
+        roles: user.roles.map(role => role.role),
+        profile: user.profile ? {
+          id: user.profile.id,
+          fullName: user.profile.fullName,
+          nickName: user.profile.nickName,
+          birthDate: user.profile.birthDate,
+          bio: user.profile.bio,
+          avatarUrl: user.profile.avatarUrl,
+          phoneNumber: user.profile.phoneNumber,
+          address: user.profile.address
+        } : null
       },
       access_token: this.jwtService.sign(payload),
     };
@@ -50,7 +68,7 @@ export class AuthService {
     email: string;
     password: string;
     username: string;
-    name?: string;
+    fullName?: string;
   }) {
     // เช็คว่ามี email หรือ username ซ้ำไหม
     const existingUser = await this.prisma.user.findFirst({
@@ -73,9 +91,18 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
     const user = await this.prisma.user.create({
       data: {
-        ...registerDto,
+        email: registerDto.email,
+        username: registerDto.username,
         password: hashedPassword,
+        profile: registerDto.fullName ? {
+          create: {
+            fullName: registerDto.fullName
+          }
+        } : undefined
       },
+      include: {
+        profile: true
+      }
     });
 
     const { password, ...result } = user;

@@ -33,7 +33,6 @@ model User {
   id                    String   @id @default(uuid())
   email                 String   @unique
   username              String   @unique
-  name                  String?
   password              String
   passwordResetToken    String?
   passwordResetExpires  DateTime?
@@ -49,6 +48,9 @@ model User {
 
 model UserProfile {
   id            String   @id @default(uuid())
+  fullName      String?
+  nickName      String?
+  birthDate     DateTime?
   bio           String?
   avatarUrl     String?
   phoneNumber   String?

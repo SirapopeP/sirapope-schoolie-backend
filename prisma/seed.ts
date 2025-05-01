@@ -1,9 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
+console.log('Starting seed script...');
+
 const prisma = new PrismaClient();
 
 async function main() {
+  console.log('Main function of seed script started');
   // Constants for root admin
   const ROOT_ADMIN_ID = '00000000-0000-0000-0000-000000000000'; // Fixed UUID for root admin
   const ROOT_ADMIN_EMAIL = 'goodadmin@schoolie.app';
@@ -12,86 +15,69 @@ async function main() {
   const SALT_ROUNDS = 10;
 
   try {
-    // Check if root admin already exists by email/username
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: ROOT_ADMIN_EMAIL },
-          { username: ROOT_ADMIN_USERNAME }
-        ]
+    // Delete existing data first
+    console.log('Cleaning up existing data...');
+    await prisma.userProfile.deleteMany({});
+    await prisma.userRole.deleteMany({});
+    await prisma.user.deleteMany({});
+    
+    console.log('Creating root admin account...');
+    
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(ROOT_ADMIN_PASSWORD, SALT_ROUNDS);
+    
+    // Create the user first
+    const user = await prisma.user.create({
+      data: {
+        id: ROOT_ADMIN_ID,
+        email: ROOT_ADMIN_EMAIL,
+        username: ROOT_ADMIN_USERNAME,
+        password: hashedPassword,
+      }
+    });
+    
+    console.log('Created user:', user);
+
+    // Create profile separately
+    const profile = await prisma.userProfile.create({
+      data: {
+        userId: user.id,
+        fullName: 'Good Master',
+        nickName: 'Goody',
+        bio: 'System Administrator',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Root+Admin&background=0D8ABC&color=fff',
+        phoneNumber: '0800000000',
+        address: 'Bangkok, Thailand'
       }
     });
 
-    // If root admin doesn't exist, create it with the fixed ID
-    if (!existingUser) {
-      console.log('Creating root admin account...');
-      
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(ROOT_ADMIN_PASSWORD, SALT_ROUNDS);
-      
-      // Create the user with fixed UUID
-      const user = await prisma.user.create({
-        data: {
-          id: ROOT_ADMIN_ID,
-          email: ROOT_ADMIN_EMAIL,
-          username: ROOT_ADMIN_USERNAME,
-          name: 'Root Administrator',
-          password: hashedPassword,
-        },
-      });
+    console.log('Created profile:', profile);
 
-      // Add ADMIN role to the user
-      await prisma.userRole.createMany({
-        data: [
-          { userId: user.id, role: 'ADMIN' },
-          { userId: user.id, role: 'ACADEMY_OWNER' }
-        ],
-        skipDuplicates: true
-      });
-      
-      console.log(`Root admin created with fixed ID: ${user.id}`);
-    } else {
-      console.log('Root admin already exists, skipping creation');
-      
-      // Ensure the user has admin role
-      const hasAdminRole = await prisma.userRole.findFirst({
-        where: {
-          userId: existingUser.id,
-          role: 'ADMIN',
-        },
-      });
-      
-      if (!hasAdminRole) {
-        await prisma.userRole.create({
-          data: {
-            userId: existingUser.id,
-            role: 'ADMIN',
-          },
-        });
-        console.log('Added ADMIN role to existing root admin');
-      }
+    // Add roles
+    await prisma.userRole.createMany({
+      data: [
+        { userId: user.id, role: 'ADMIN' },
+        { userId: user.id, role: 'ACADEMY_OWNER' }
+      ]
+    });
 
-      // Ensure the user has ACADEMY_OWNER role
-      const hasOwnerRole = await prisma.userRole.findFirst({
-        where: {
-          userId: existingUser.id,
-          role: 'ACADEMY_OWNER',
-        },
-      });
-      if (!hasOwnerRole) {
-        await prisma.userRole.create({
-          data: {
-            userId: existingUser.id,
-            role: 'ACADEMY_OWNER',
-          },
-        });
-        console.log('Added ACADEMY_OWNER role to existing root admin');
+    console.log('Added roles for user');
+
+    // Verify everything was created correctly
+    const finalUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        profile: true,
+        roles: true
       }
-    }
+    });
+
+    console.log('Final user data:', finalUser);
     
     console.log('Seed completed successfully!');
   } catch (error) {
     console.error('Error seeding database:', error);
+    throw error;
   }
 }
 

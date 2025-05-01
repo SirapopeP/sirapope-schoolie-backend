@@ -26,8 +26,12 @@ export async function autoSeedRootAdmin() {
           id: ROOT_ADMIN_ID,
           email: ROOT_ADMIN_EMAIL,
           username: ROOT_ADMIN_USERNAME,
-          name: 'Root Administrator',
           password: hashedPassword,
+          profile: {
+            create: {
+              fullName: 'Root Administrator'
+            }
+          }
         },
       });
 

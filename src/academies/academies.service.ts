@@ -32,7 +32,11 @@ export class AcademiesService {
             id: true,
             email: true,
             username: true,
-            name: true
+            profile: {
+              select: {
+                fullName: true
+              }
+            }
           }
         }
       }
@@ -50,7 +54,11 @@ export class AcademiesService {
               id: true,
               email: true,
               username: true,
-              name: true
+              profile: {
+                select: {
+                  fullName: true
+                }
+              }
             }
           },
           members: true
@@ -71,7 +79,11 @@ export class AcademiesService {
             id: true,
             email: true,
             username: true,
-            name: true
+            profile: {
+              select: {
+                fullName: true
+              }
+            }
           }
         },
         members: true

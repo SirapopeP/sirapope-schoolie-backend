@@ -28,7 +28,11 @@ export class RolesService {
             id: true,
             email: true,
             username: true,
-            name: true
+            profile: {
+              select: {
+                fullName: true
+              }
+            }
           }
         }
       }
@@ -44,7 +48,11 @@ export class RolesService {
             id: true,
             email: true,
             username: true,
-            name: true
+            profile: {
+              select: {
+                fullName: true
+              }
+            }
           }
         }
       }
