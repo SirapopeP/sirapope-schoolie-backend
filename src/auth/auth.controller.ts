@@ -23,9 +23,10 @@ export class AuthController {
   async register(
     @Body() registerDto: {
       email: string;
-      username: string; // เพิ่ม username
+      username: string;
       password: string;
-      name?: string;
+      fullName?: string;
+      nickName?: string;
     }
   ) {
     return this.authService.register(registerDto);

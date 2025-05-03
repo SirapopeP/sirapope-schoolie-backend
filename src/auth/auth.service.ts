@@ -69,6 +69,7 @@ export class AuthService {
     password: string;
     username: string;
     fullName?: string;
+    nickName?: string;
   }) {
     // เช็คว่ามี email หรือ username ซ้ำไหม
     const existingUser = await this.prisma.user.findFirst({
@@ -94,14 +95,21 @@ export class AuthService {
         email: registerDto.email,
         username: registerDto.username,
         password: hashedPassword,
-        profile: registerDto.fullName ? {
+        profile: {
           create: {
-            fullName: registerDto.fullName
+            fullName: registerDto.fullName,
+            nickName: registerDto.nickName
           }
-        } : undefined
+        },
+        roles: {
+          create: {
+            role: 'GUEST'
+          }
+        }
       },
       include: {
-        profile: true
+        profile: true,
+        roles: true
       }
     });
 

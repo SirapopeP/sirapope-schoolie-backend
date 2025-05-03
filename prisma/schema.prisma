@@ -19,6 +19,7 @@ enum Role {
   ACADEMY_OWNER
   TEACHER
   STUDENT
+  GUEST
 }
 
 enum Grade {
@@ -70,13 +71,6 @@ model UserRole {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, role])
-}
-
-model UserPermission {
-  permissionId  String   @id @default(uuid())
-  userId        String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
 }
 
 model Academy {
