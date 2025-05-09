@@ -20,6 +20,9 @@ export class UserProfilesController {
   @Post()
   async createUserProfile(
     @Body() profileData: { 
+      fullName?: string;
+      nickName?: string;
+      birthDate?: Date;
       bio?: string;
       avatarUrl?: string;
       phoneNumber?: string;
@@ -35,17 +38,25 @@ export class UserProfilesController {
       throw new NotFoundException(`Profile already exists for user ID ${profileData.userId}`);
     }
 
-    const { userId, ...rest } = profileData;
-    return this.userProfilesService.createUserProfile({
+    const { userId, birthDate, ...rest } = profileData;
+    
+    // Format birthDate if provided
+    const formattedData = {
       ...rest,
+      ...(birthDate && { birthDate: new Date(birthDate) }),
       user: { connect: { id: userId } }
-    });
+    };
+    
+    return this.userProfilesService.createUserProfile(formattedData);
   }
 
-  @Put('user/:userId')  // เปลี่ยนจาก :id เป็น user/:userId
+  @Put('user/:userId')
   async updateUserProfile(
     @Param('userId') userId: string,
     @Body() profileData: {
+      fullName?: string;
+      nickName?: string;
+      birthDate?: Date;
       bio?: string;
       avatarUrl?: string;
       phoneNumber?: string;
@@ -60,10 +71,17 @@ export class UserProfilesController {
       throw new NotFoundException(`Profile not found for user ID ${userId}`);
     }
 
+    const { birthDate, ...rest } = profileData;
+    
+    // Format birthDate if provided
+    const formattedData = {
+      ...rest,
+      ...(birthDate && { birthDate: new Date(birthDate) })
+    };
+
     return this.userProfilesService.updateUserProfile({
-      where: { userId: userId },  // เปลี่ยนจาก id เป็น userId
-      data: profileData,
+      where: { userId: userId },
+      data: formattedData,
     });
   }
-
 }
