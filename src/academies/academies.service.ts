@@ -21,25 +21,62 @@ export class AcademiesService {
       throw new ForbiddenException('User must be an ACADEMY_OWNER to create an academy');
     }
 
-    return this.prisma.academy.create({
-      data: {
-        ...data,
-        ownerId,
-      },
-      include: {
-        owner: {
-          select: {
-            id: true,
-            email: true,
-            username: true,
-            profile: {
-              select: {
-                fullName: true
+    // Create academy in a transaction to also add owner as first member
+    return this.prisma.$transaction(async (tx) => {
+      // สร้าง academy
+      const academy = await tx.academy.create({
+        data: {
+          ...data,
+          ownerId,
+        },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              email: true,
+              username: true,
+              profile: {
+                select: {
+                  fullName: true
+                }
               }
             }
           }
         }
-      }
+      });
+
+      // เพิ่มเจ้าของเป็น member คนแรกของ academy
+      await tx.academyMember.create({
+        data: {
+          userId: ownerId,
+          academyId: academy.id
+        }
+      });
+
+      // อัพเดทข้อมูลสถิติ
+      const updatedAcademy = await tx.academy.update({
+        where: { id: academy.id },
+        data: {
+          studentCount: 1
+        },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              email: true,
+              username: true,
+              profile: {
+                select: {
+                  fullName: true
+                }
+              }
+            }
+          },
+          members: true
+        }
+      });
+
+      return updatedAcademy;
     });
   }
 
@@ -148,5 +185,146 @@ export class AcademiesService {
 
     await this.prisma.academy.delete({ where: { id: academyId } });
     return { message: 'Academy deleted successfully' };
+  }
+
+  async addMember(academyId: string, userId: string, requesterId: string) {
+    // ตรวจสอบว่า requester เป็นเจ้าของ academy หรือ admin
+    const academy = await this.prisma.academy.findUnique({ where: { id: academyId } });
+    if (!academy) throw new ForbiddenException('Academy not found');
+
+    const isAdmin = await this.rolesService.checkUserRole(requesterId, 'ADMIN');
+    if (academy.ownerId !== requesterId && !isAdmin) {
+      throw new ForbiddenException('You are not allowed to add members to this academy');
+    }
+
+    // ตรวจสอบว่า user ยังไม่ได้เป็น member
+    const existingMember = await this.prisma.academyMember.findUnique({
+      where: {
+        userId_academyId: {
+          userId,
+          academyId
+        }
+      }
+    });
+
+    if (existingMember) {
+      throw new ForbiddenException('User is already a member of this academy');
+    }
+
+    const member = await this.prisma.academyMember.create({
+      data: {
+        userId,
+        academyId
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            profile: {
+              select: {
+                fullName: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // อัพเดทจำนวนสมาชิก
+    await this.updateAcademyStats(academyId);
+
+    return member;
+  }
+
+  async removeMember(academyId: string, userId: string, requesterId: string) {
+    // ตรวจสอบว่า requester เป็นเจ้าของ academy หรือ admin
+    const academy = await this.prisma.academy.findUnique({ where: { id: academyId } });
+    if (!academy) throw new ForbiddenException('Academy not found');
+
+    const isAdmin = await this.rolesService.checkUserRole(requesterId, 'ADMIN');
+    if (academy.ownerId !== requesterId && !isAdmin) {
+      throw new ForbiddenException('You are not allowed to remove members from this academy');
+    }
+
+    // ตรวจสอบว่า user เป็น member
+    const member = await this.prisma.academyMember.findUnique({
+      where: {
+        userId_academyId: {
+          userId,
+          academyId
+        }
+      }
+    });
+
+    if (!member) {
+      throw new ForbiddenException('User is not a member of this academy');
+    }
+
+    await this.prisma.academyMember.delete({
+      where: {
+        userId_academyId: {
+          userId,
+          academyId
+        }
+      }
+    });
+
+    // อัพเดทจำนวนสมาชิก
+    await this.updateAcademyStats(academyId);
+
+    return { message: 'Member removed successfully' };
+  }
+
+  async getAcademyMembers(academyId: string, requesterId: string) {
+    // ตรวจสอบว่า requester เป็นเจ้าของ academy, member หรือ admin
+    const academy = await this.prisma.academy.findUnique({ where: { id: academyId } });
+    if (!academy) throw new ForbiddenException('Academy not found');
+
+    const isAdmin = await this.rolesService.checkUserRole(requesterId, 'ADMIN');
+    const isMember = await this.prisma.academyMember.findUnique({
+      where: {
+        userId_academyId: {
+          userId: requesterId,
+          academyId
+        }
+      }
+    });
+
+    if (academy.ownerId !== requesterId && !isAdmin && !isMember) {
+      throw new ForbiddenException('You are not allowed to view members of this academy');
+    }
+
+    return this.prisma.academyMember.findMany({
+      where: { academyId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            profile: {
+              select: {
+                fullName: true
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  async isAcademyMember(academyId: string, userId: string) {
+    const member = await this.prisma.academyMember.findUnique({
+      where: {
+        userId_academyId: {
+          userId,
+          academyId
+        }
+      }
+    });
+
+    return { isMember: !!member };
   }
 }

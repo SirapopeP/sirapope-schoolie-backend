@@ -63,4 +63,37 @@ export class AcademiesController {
   ) {
     return this.academiesService.deleteAcademy(academyId, data.userId);
   }
+
+  @Post(':academyId/members')
+  async addMember(
+    @Param('academyId') academyId: string,
+    @Body() data: { userId: string; requesterId: string }
+  ) {
+    return this.academiesService.addMember(academyId, data.userId, data.requesterId);
+  }
+
+  @Delete(':academyId/members/:userId')
+  async removeMember(
+    @Param('academyId') academyId: string,
+    @Param('userId') userId: string,
+    @Body() data: { requesterId: string }
+  ) {
+    return this.academiesService.removeMember(academyId, userId, data.requesterId);
+  }
+
+  @Get(':academyId/members')
+  async getAcademyMembers(
+    @Param('academyId') academyId: string,
+    @Body() data: { requesterId: string }
+  ) {
+    return this.academiesService.getAcademyMembers(academyId, data.requesterId);
+  }
+
+  @Get(':academyId/members/:userId/check')
+  async isAcademyMember(
+    @Param('academyId') academyId: string,
+    @Param('userId') userId: string
+  ) {
+    return this.academiesService.isAcademyMember(academyId, userId);
+  }
 }
