@@ -13,10 +13,17 @@ async function main() {
   const ROOT_ADMIN_USERNAME = 'goodadmin';
   const ROOT_ADMIN_PASSWORD = 'P@ss1234';
   const SALT_ROUNDS = 10;
+  
+  // Constants for starter academy
+  const STARTER_ACADEMY_ID = '00000000-0000-0000-0000-000000000001';
+  const STARTER_ACADEMY_NAME = 'Schoolie Official Academy';
 
   try {
     // Delete existing data first
     console.log('Cleaning up existing data...');
+    await prisma.academyInvitation.deleteMany({}); // Delete invitations first due to references
+    await prisma.academyMember.deleteMany({}); // Delete members first due to references
+    await prisma.academy.deleteMany({}); // Delete academies after members
     await prisma.userProfile.deleteMany({});
     await prisma.userRole.deleteMany({});
     await prisma.user.deleteMany({});
@@ -62,17 +69,48 @@ async function main() {
     });
 
     console.log('Added roles for user');
+    
+    // Create starter academy
+    console.log('Creating starter academy...');
+    const academy = await prisma.academy.create({
+      data: {
+        id: STARTER_ACADEMY_ID,
+        name: STARTER_ACADEMY_NAME,
+        bio: 'Official academy for Schoolie platform',
+        logoUrl: 'https://ui-avatars.com/api/?name=Schoolie+Academy&background=002B5B&color=fff',
+        ownerId: user.id,
+        studentCount: 1, // Owner as first member
+        isActive: true
+      }
+    });
+    
+    console.log('Created starter academy:', academy);
+    
+    // Add owner as member of academy
+    const member = await prisma.academyMember.create({
+      data: {
+        userId: user.id,
+        academyId: academy.id
+      }
+    });
+    
+    console.log('Added owner as academy member:', member);
 
     // Verify everything was created correctly
     const finalUser = await prisma.user.findUnique({
       where: { id: user.id },
       include: {
         profile: true,
-        roles: true
+        roles: true,
+        academyMember: {
+          include: {
+            academy: true
+          }
+        }
       }
     });
 
-    console.log('Final user data:', finalUser);
+    console.log('Final user data with academy membership:', finalUser);
     
     console.log('Seed completed successfully!');
   } catch (error) {
