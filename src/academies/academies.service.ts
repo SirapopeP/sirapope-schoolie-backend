@@ -49,7 +49,10 @@ export class AcademiesService {
       await tx.academyMember.create({
         data: {
           userId: ownerId,
-          academyId: academy.id
+          academyId: academy.id,
+          memberStatus: 'ACTIVE',
+          memberLevel: 3.0,
+          memberIncome: 0
         }
       });
 
@@ -214,7 +217,10 @@ export class AcademiesService {
     const member = await this.prisma.academyMember.create({
       data: {
         userId,
-        academyId
+        academyId,
+        memberStatus: 'ACTIVE',
+        memberLevel: 3.0,
+        memberIncome: 0
       },
       include: {
         user: {

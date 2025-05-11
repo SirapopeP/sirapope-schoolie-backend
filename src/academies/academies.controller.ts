@@ -1,5 +1,5 @@
 // src/academies/academies.controller.ts
-import { Controller, Get, Post, Body, Param, UseGuards, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Patch, Delete, Query } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AcademiesService } from './academies.service';
 import { ForbiddenException } from '@nestjs/common';
@@ -84,9 +84,9 @@ export class AcademiesController {
   @Get(':academyId/members')
   async getAcademyMembers(
     @Param('academyId') academyId: string,
-    @Body() data: { requesterId: string }
+    @Query('requesterId') requesterId: string
   ) {
-    return this.academiesService.getAcademyMembers(academyId, data.requesterId);
+    return this.academiesService.getAcademyMembers(academyId, requesterId);
   }
 
   @Get(':academyId/members/:userId/check')

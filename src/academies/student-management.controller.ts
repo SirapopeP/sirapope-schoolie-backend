@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, UseGuards, Patch } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards, Patch, Query } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { StudentManagementService } from './student-management.service';
 
@@ -70,5 +70,13 @@ export class StudentManagementController {
   @Get('invitations/user/:userId')
   async getUserPendingInvitations(@Param('userId') userId: string) {
     return this.studentManagementService.getUserPendingInvitations(userId);
+  }
+
+  @Get(':academyId/students')
+  async getAcademyStudents(
+    @Param('academyId') academyId: string,
+    @Query('requesterId') requesterId: string
+  ) {
+    return this.studentManagementService.getAcademyStudents(academyId, requesterId);
   }
 } 

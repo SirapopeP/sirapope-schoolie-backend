@@ -95,13 +95,16 @@ model Academy {
 }
 
 model AcademyMember {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  academy   Academy  @relation(fields: [academyId], references: [id])
-  academyId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+  academy      Academy  @relation(fields: [academyId], references: [id])
+  academyId    String
+  memberStatus String   @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+  memberLevel  Float    @default(3.0) // Likelihood of continuing on a scale (e.g., 4.2)
+  memberIncome Float    @default(0) // Total income generated from this member
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@unique([userId, academyId])
 }

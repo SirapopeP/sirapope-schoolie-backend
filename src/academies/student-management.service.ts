@@ -257,4 +257,70 @@ export class StudentManagementService {
       }
     });
   }
+
+  // ดึงข้อมูลนักเรียนทั้งหมดของ academy (เฉพาะ role STUDENT)
+  async getAcademyStudents(academyId: string, requesterId: string) {
+    // ตรวจสอบว่า requester เป็นเจ้าของ academy, admin หรือสมาชิก
+    const academy = await this.prisma.academy.findUnique({ 
+      where: { id: academyId }
+    });
+    
+    if (!academy) {
+      throw new NotFoundException('Academy not found');
+    }
+
+    const isAdmin = await this.rolesService.checkUserRole(requesterId, 'ADMIN');
+    const isMember = await this.prisma.academyMember.findUnique({
+      where: {
+        userId_academyId: {
+          userId: requesterId,
+          academyId
+        }
+      }
+    });
+
+    if (academy.ownerId !== requesterId && !isAdmin && !isMember) {
+      throw new ForbiddenException('You are not allowed to view students of this academy');
+    }
+
+    // ดึงข้อมูลสมาชิกที่มีบทบาทเป็น STUDENT
+    return this.prisma.academyMember.findMany({
+      where: { 
+        academyId,
+        user: {
+          roles: {
+            some: {
+              role: 'STUDENT'
+            }
+          }
+        } 
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            profile: {
+              select: {
+                fullName: true,
+                nickName: true,
+                avatarUrl: true,
+                birthDate: true,
+                phoneNumber: true
+              }
+            },
+            roles: {
+              select: {
+                role: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+  }
 } 
