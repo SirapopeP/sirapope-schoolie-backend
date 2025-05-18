@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  seed     = "ts-node prisma/seed.ts"
 }
 
 datasource db {
@@ -13,23 +14,177 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Example models - you can modify these based on your needs
+enum Role {
+  ADMIN
+  ACADEMY_OWNER
+  TEACHER
+  STUDENT
+  GUEST
+}
+
+enum Grade {
+  A
+  B
+  C
+  D
+  F
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
+  id                   String                @id @default(uuid())
+  email                String                @unique
+  username             String                @unique
+  password             String
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+  roles                UserRole[]
+  academyOwner         Academy[]
+  academyMember        AcademyMember[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  profile              UserProfile?
+  posts                Post[]
+  workshopParticipants WorkshopParticipant[]
+  academyInvitations   AcademyInvitation[]
+}
+
+model UserProfile {
+  id          String    @id @default(uuid())
+  fullName    String?
+  nickName    String?
+  birthDate   DateTime?
+  bio         String?
+  avatarUrl   String?
+  phoneNumber String?
+  address     String?
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  role      Role
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  posts     Post[]
+
+  @@unique([userId, role])
+}
+
+model Academy {
+  id            String              @id @default(uuid())
+  name          String
+  bio           String?
+  logoUrl       String?
+  workshopCount Int                 @default(0)
+  studentCount  Int                 @default(0)
+  teacherCount  Int                 @default(0)
+  academyRank   Float               @default(0)
+  isActive      Boolean             @default(true)
+  owner         User                @relation(fields: [ownerId], references: [id])
+  ownerId       String
+  members       AcademyMember[]
+  invitations   AcademyInvitation[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@unique([ownerId, name])
+}
+
+model AcademyMember {
+  id           String   @id @default(uuid())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+  academy      Academy  @relation(fields: [academyId], references: [id])
+  academyId    String
+  memberStatus String   @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+  memberLevel  Float    @default(3.0) // Likelihood of continuing on a scale (e.g., 4.2)
+  memberIncome Float    @default(0) // Total income generated from this member
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, academyId])
 }
 
 model Post {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   title     String
   content   String?
   published Boolean  @default(false)
   author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
+  authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model WorkshopCourses {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  maxSessions Int
+  level       String // Beginner, Intermediate, Advanced
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  workshops Workshop[]
+}
+
+model Workshop {
+  id           String                @id @default(uuid())
+  course       WorkshopCourses       @relation(fields: [courseId], references: [id])
+  courseId     String
+  enrolledAt   DateTime              @default(now())
+  status       String                @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, CANCELLED
+  sessions     WorkshopSession[]
+  participants WorkshopParticipant[]
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+}
+
+model WorkshopParticipant {
+  id               String            @id @default(uuid())
+  workshop         Workshop          @relation(fields: [workshopId], references: [id])
+  workshopId       String
+  user             User              @relation(fields: [userId], references: [id])
+  userId           String
+  role             String // STUDENT, TEACHER
+  teachingSessions WorkshopSession[] @relation("TeachingSessions")
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@unique([workshopId, userId])
+}
+
+model WorkshopSession {
+  id            String               @id @default(uuid())
+  workshop      Workshop             @relation(fields: [workshopId], references: [id])
+  workshopId    String
+  sessionNumber Int
+  date          DateTime
+  grade         Grade?
+  teacher       WorkshopParticipant? @relation("TeachingSessions", fields: [teacherId], references: [id])
+  teacherId     String?
+  submissionUrl String?
+  status        String               @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
+  notes         String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+}
+
+model AcademyInvitation {
+  id        String   @id @default(uuid())
+  academy   Academy  @relation(fields: [academyId], references: [id])
+  academyId String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  status    String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([academyId, userId])
 }
